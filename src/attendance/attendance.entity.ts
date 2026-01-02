@@ -1,17 +1,18 @@
+// src/attendance/attendance.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
 
-@Entity()
+@Entity('attendances')
 export class Attendance {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
-  @Column()
-  type: string; // masuk / pulang
-
-  @Column({ type: 'timestamp' })
-  timestamp: Date;
+  @Column({ type: 'varchar' })
+  type!: 'IN' | 'OUT';
 
   @ManyToOne(() => User, (user) => user.attendances)
-  user: User;
+  user!: User;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at!: Date;
 }

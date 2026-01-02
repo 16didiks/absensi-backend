@@ -1,25 +1,9 @@
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
-
+// src/user/dto/create-user.dto.ts
 export class CreateUserDto {
-  @IsString()
-  name: string;
-
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(6)
-  password: string;
-
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @IsOptional()
-  @IsString()
+  name!: string;
+  email!: string;
+  password!: string;
+  phone!: string;
+  position!: string;
   photo?: string;
-
-  @IsOptional()
-  @IsString()
-  position?: string;
 }

@@ -3,14 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -26,23 +25,13 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User | null> {
-    return (await this.userRepository.findOneBy({ id })) ?? null;
+  async findByEmail(email: string): Promise<User | undefined> {
+    return (
+      (await this.userRepository.findOne({ where: { email } })) ?? undefined
+    );
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | null> {
-    const user = await this.findOne(id);
-    if (!user) return null;
-
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
-
-    Object.assign(user, updateUserDto);
-    return this.userRepository.save(user);
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+  async findOne(id: number): Promise<User | undefined> {
+    return (await this.userRepository.findOne({ where: { id } })) ?? undefined;
   }
 }

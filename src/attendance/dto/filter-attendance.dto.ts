@@ -1,11 +1,12 @@
-import { IsOptional, IsDateString } from 'class-validator';
+// src/attendance/dto/filter-attendance.dto.ts
+import { IsDateString, IsOptional } from 'class-validator';
 
 export class FilterAttendanceDto {
   @IsOptional()
   @IsDateString()
-  from?: string; // format: YYYY-MM-DD
+  from?: string;
 
   @IsOptional()
   @IsDateString()
-  to?: string; // format: YYYY-MM-DD
+  to?: string;
 }

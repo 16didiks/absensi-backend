@@ -1,60 +1,47 @@
+// src/attendance/attendance.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Attendance } from './attendance.entity';
-import { CreateAttendanceDto } from './dto/create-attendance.dto';
-import { FilterAttendanceDto } from './dto/filter-attendance.dto';
 import { User } from '../user/user.entity';
 
 @Injectable()
 export class AttendanceService {
   constructor(
     @InjectRepository(Attendance)
-    private attendanceRepository: Repository<Attendance>,
+    private readonly attendanceRepo: Repository<Attendance>,
+
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepo: Repository<User>,
   ) {}
 
-  async create(dto: CreateAttendanceDto): Promise<Attendance> {
-    const user = await this.userRepository.findOneBy({ id: dto.userId });
+  async create(userId: number, type: 'IN' | 'OUT') {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const attendance = this.attendanceRepository.create({
-      type: dto.type,
-      timestamp: new Date(),
-      user,
+    const attendance = this.attendanceRepo.create({ user, type });
+    return this.attendanceRepo.save(attendance);
+  }
+
+  async findByUser(userId: number) {
+    return this.attendanceRepo.find({
+      where: { user: { id: userId } },
     });
-
-    return this.attendanceRepository.save(attendance);
   }
 
-  async findAll(): Promise<Attendance[]> {
-    return this.attendanceRepository.find({ relations: ['user'] });
-  }
-
-  async findByUser(
-    userId: number,
-    filter?: FilterAttendanceDto,
-  ): Promise<Attendance[]> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+  // New method untuk filter by date
+  async findByUserAndDate(userId: number, from?: string, to?: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const where: any = { user: { id: userId } };
+    const query = this.attendanceRepo
+      .createQueryBuilder('attendance')
+      .where('attendance.userId = :userId', { userId });
 
-    if (filter?.from && filter?.to) {
-      const fromDate = new Date(filter.from);
-      const toDate = new Date(filter.to);
-      // Tambahkan jam akhir hari 23:59:59
-      toDate.setHours(23, 59, 59, 999);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      where.timestamp = Between(fromDate, toDate);
-    }
+    if (from) query.andWhere('attendance.created_at >= :from', { from });
+    if (to) query.andWhere('attendance.created_at <= :to', { to });
 
-    return this.attendanceRepository.find({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      where,
-      relations: ['user'],
-      order: { timestamp: 'ASC' },
-    });
+    const result = await query.getMany();
+    return result;
   }
 }

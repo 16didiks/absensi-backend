@@ -1,14 +1,20 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+
+// 🔑 Import yang hilang ini
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+// Modules lain
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 import { AttendanceModule } from './attendance/attendance.module';
-import { User } from './user/user.entity';
-import { Attendance } from './attendance/attendance.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true, // biar bisa pakai process.env di seluruh app
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -16,10 +22,11 @@ import { Attendance } from './attendance/attendance.entity';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Attendance],
+      autoLoadEntities: true,
       synchronize: true,
     }),
     UserModule,
+    AuthModule,
     AttendanceModule,
   ],
 })

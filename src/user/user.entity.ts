@@ -1,30 +1,27 @@
+// src/user/user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Attendance } from '../attendance/attendance.entity';
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
-  @Column({ nullable: true })
-  phone?: string;
+  @Column()
+  phone!: string;
 
-  @Column({ nullable: true })
-  photo?: string;
+  @Column()
+  position!: string;
 
-  @Column({ nullable: true })
-  position?: string;
-
-  // gunakan arrow function untuk forward reference
-  @OneToMany(() => Attendance, (attendance) => attendance.user)
-  attendances: Attendance[];
+  @OneToMany(() => Attendance, (a) => a.user)
+  attendances!: Attendance[];
 }
