@@ -17,6 +17,14 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async findForLogin(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
   // ================= CREATE =================
   async create(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
