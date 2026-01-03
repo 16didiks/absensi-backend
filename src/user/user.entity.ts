@@ -1,8 +1,19 @@
-// src/user/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Attendance } from '../attendance/attendance.entity';
 
-@Entity('users')
+export enum UserRole {
+  EMPLOYEE = 'EMPLOYEE',
+  HRD = 'HRD',
+}
+
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -16,12 +27,24 @@ export class User {
   @Column()
   password!: string;
 
-  @Column()
+  @Column({ nullable: true })
   phone!: string;
 
-  @Column()
+  @Column({ nullable: true })
   position!: string;
 
-  @OneToMany(() => Attendance, (a) => a.user)
+  @Column({ nullable: true })
+  photo?: string;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.EMPLOYEE })
+  role!: UserRole;
+
+  @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances!: Attendance[];
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

@@ -12,22 +12,12 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
-
-    if (!user) {
-      throw new UnauthorizedException('User tidak ditemukan');
-    }
+    if (!user) throw new UnauthorizedException('User tidak ditemukan');
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new UnauthorizedException('Password salah');
-    }
+    if (!isMatch) throw new UnauthorizedException('Password salah');
 
-    // 🔥 PAYLOAD JWT
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-    };
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     return {
       message: 'Login success',
@@ -36,6 +26,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     };
   }
