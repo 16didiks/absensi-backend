@@ -1,6 +1,6 @@
-// src/attendance/attendance.controller.ts
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
+import { AttendanceSummaryDto } from './dto/attendance-summary.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
@@ -10,16 +10,20 @@ import { JwtPayload } from '../auth/jwt-payload.interface';
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Post()
-  async create(
+  @Get()
+  async summary(
     @CurrentUser() user: JwtPayload,
-    @Body('type') type: 'IN' | 'OUT',
+    @Query() query: AttendanceSummaryDto,
   ) {
-    return this.attendanceService.create(user.id, type);
-  }
+    const data = await this.attendanceService.getSummary(
+      user.id,
+      query.from,
+      query.to,
+    );
 
-  @Get('me')
-  async findMyAttendance(@CurrentUser() user: JwtPayload) {
-    return this.attendanceService.findByUser(user.id);
+    return {
+      message: 'Summary absensi',
+      data,
+    };
   }
 }

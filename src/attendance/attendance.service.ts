@@ -1,39 +1,51 @@
-// src/attendance/attendance.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Attendance } from './attendance.entity';
-import { User } from '../user/user.entity';
 
 @Injectable()
 export class AttendanceService {
   constructor(
     @InjectRepository(Attendance)
     private readonly attendanceRepo: Repository<Attendance>,
-
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
   ) {}
 
-  async create(userId: number, type: 'IN' | 'OUT') {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+  async getSummary(userId: number, from?: string, to?: string) {
+    const startDate = from
+      ? new Date(`${from}T00:00:00.000Z`)
+      : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-    if (!user) {
-      throw new BadRequestException('User not found');
+    const endDate = to ? new Date(`${to}T23:59:59.999Z`) : new Date();
+
+    const records = await this.attendanceRepo.find({
+      where: {
+        user: { id: userId },
+        createdAt: Between(startDate, endDate),
+      },
+      order: { createdAt: 'ASC' },
+    });
+
+    const summaryMap: Record<
+      string,
+      { tanggal: string; masuk?: Date; pulang?: Date }
+    > = {};
+
+    for (const item of records) {
+      const dateKey = item.createdAt.toISOString().split('T')[0];
+
+      if (!summaryMap[dateKey]) {
+        summaryMap[dateKey] = { tanggal: dateKey };
+      }
+
+      if (item.type === 'IN') {
+        summaryMap[dateKey].masuk = item.createdAt;
+      }
+
+      if (item.type === 'OUT') {
+        summaryMap[dateKey].pulang = item.createdAt;
+      }
     }
 
-    const attendance = this.attendanceRepo.create({
-      user,
-      type,
-    });
-
-    return this.attendanceRepo.save(attendance);
-  }
-
-  async findByUser(userId: number) {
-    return this.attendanceRepo.find({
-      where: { user: { id: userId } },
-      order: { createdAt: 'DESC' },
-    });
+    return Object.values(summaryMap);
   }
 }
