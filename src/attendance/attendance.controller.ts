@@ -26,4 +26,17 @@ export class AttendanceController {
       data,
     };
   }
+
+  @Get('hrd')
+  async summaryForHrd(@Query() query: AttendanceSummaryDto) {
+    const data = await this.attendanceService.getSummaryForHrd(
+      query.from,
+      query.to,
+    );
+
+    return {
+      message: 'Summary absensi karyawan',
+      data,
+    };
+  }
 }
