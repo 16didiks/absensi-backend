@@ -17,76 +17,53 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async findForLogin(email: string): Promise<User | null> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .where('user.email = :email', { email })
-      .getOne();
-  }
-
-  // ================= CREATE =================
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-    // ✅ Safe assignment role
+  // CREATE
+  async create(dto: CreateUserDto): Promise<User> {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
     const role: UserRole =
-      createUserDto.role && Object.values(UserRole).includes(createUserDto.role)
-        ? createUserDto.role
+      dto.role && Object.values(UserRole).includes(dto.role)
+        ? dto.role
         : UserRole.EMPLOYEE;
 
     const user = this.userRepository.create({
-      ...createUserDto,
+      ...dto,
       password: hashedPassword,
       role,
     });
-
     return this.userRepository.save(user);
   }
 
-  // ================= FIND =================
+  // FIND
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
-    return (
-      (await this.userRepository.findOne({ where: { email } })) ?? undefined
-    );
+  async findForLogin(email: string): Promise<User | null> {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
+
+    return user ?? null; // undefined diganti jadi null
   }
 
-  async findOne(id: number): Promise<User | undefined> {
-    return (await this.userRepository.findOne({ where: { id } })) ?? undefined;
-  }
-
-  // ================= UPDATE =================
+  // UPDATE
   async update(id: number, dto: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('User tidak ditemukan');
-    }
+    if (!user) throw new NotFoundException('User tidak ditemukan');
 
-    // email unik
     if (dto.email && dto.email !== user.email) {
       const exists = await this.userRepository.findOne({
         where: { email: dto.email },
       });
-      if (exists) {
-        throw new BadRequestException('Email sudah digunakan');
-      }
+      if (exists) throw new BadRequestException('Email sudah digunakan');
       user.email = dto.email;
     }
 
-    // password hash
-    if (dto.password) {
-      user.password = await bcrypt.hash(dto.password, 10);
-    }
-
-    // safe role
-    if (dto.role && Object.values(UserRole).includes(dto.role)) {
+    if (dto.password) user.password = await bcrypt.hash(dto.password, 10);
+    if (dto.role && Object.values(UserRole).includes(dto.role))
       user.role = dto.role;
-    }
-
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.position !== undefined) user.position = dto.position;
@@ -95,7 +72,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  // ================= DELETE =================
+  // DELETE
   async delete(id: number): Promise<{ deleted: boolean }> {
     const result = await this.userRepository.delete(id);
     return { deleted: !!result.affected };

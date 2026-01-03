@@ -11,7 +11,7 @@ export class AttendanceService {
     private readonly attendanceRepo: Repository<Attendance>,
 
     @InjectRepository(User)
-    private readonly userRepo: Repository<User>, // ⚡ penting!
+    private readonly userRepo: Repository<User>,
   ) {}
 
   // ================== SUBMIT IN/OUT ==================
@@ -23,7 +23,7 @@ export class AttendanceService {
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
     const attendance = this.attendanceRepo.create({
-      user,
+      user, // gunakan object user penuh, TS aman
       type,
     });
 
@@ -35,16 +35,12 @@ export class AttendanceService {
     const startDate = from
       ? new Date(`${from}T00:00:00.000Z`)
       : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
     const endDate = to ? new Date(`${to}T23:59:59.999Z`) : new Date();
 
     const records = await this.attendanceRepo.find({
-      where: {
-        user: { id: userId },
-        createdAt: Between(startDate, endDate),
-      },
+      where: { user: { id: userId }, createdAt: Between(startDate, endDate) },
+      relations: ['user'],
       order: { createdAt: 'ASC' },
-      relations: ['user'], // pastikan eager load user
     });
 
     const summaryMap: Record<
@@ -54,9 +50,7 @@ export class AttendanceService {
 
     for (const item of records) {
       const dateKey = item.createdAt.toISOString().split('T')[0];
-
       if (!summaryMap[dateKey]) summaryMap[dateKey] = { tanggal: dateKey };
-
       if (item.type === 'IN') summaryMap[dateKey].masuk = item.createdAt;
       if (item.type === 'OUT') summaryMap[dateKey].pulang = item.createdAt;
     }
@@ -69,7 +63,6 @@ export class AttendanceService {
     const startDate = from
       ? new Date(`${from}T00:00:00.000Z`)
       : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
     const endDate = to ? new Date(`${to}T23:59:59.999Z`) : new Date();
 
     const records = await this.attendanceRepo.find({
@@ -89,22 +82,22 @@ export class AttendanceService {
     > = {};
 
     for (const item of records) {
-      const userId = item.user.id;
+      const uid = item.user.id;
       const dateKey = item.createdAt.toISOString().split('T')[0];
 
-      if (!result[userId]) {
-        result[userId] = {
-          userId,
+      if (!result[uid]) {
+        result[uid] = {
+          userId: uid,
           name: item.user.name,
           email: item.user.email,
           summary: [],
         };
       }
 
-      let day = result[userId].summary.find((d) => d.tanggal === dateKey);
+      let day = result[uid].summary.find((d) => d.tanggal === dateKey);
       if (!day) {
         day = { tanggal: dateKey };
-        result[userId].summary.push(day);
+        result[uid].summary.push(day);
       }
 
       if (item.type === 'IN') day.masuk = item.createdAt;

@@ -11,14 +11,13 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string) {
-    // Cari user + ambil password
+    // Ambil user + password
     const user = await this.userService.findForLogin(email);
     if (!user) throw new UnauthorizedException('User tidak ditemukan');
 
     if (!user.password)
-      throw new UnauthorizedException('Password tidak tersedia');
+      throw new UnauthorizedException('User tidak punya password');
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Password salah');
 
@@ -26,10 +25,7 @@ export class AuthService {
 
     return {
       message: 'Login success',
-      access_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET || 'secret',
-        expiresIn: '7d', // token valid 7 hari
-      }),
+      access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
         name: user.name,
