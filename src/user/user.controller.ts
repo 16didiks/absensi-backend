@@ -71,4 +71,10 @@ export class UserController {
   async getProfileChangeLog() {
     return this.userService.getProfileChangeLogs();
   }
+
+  // ================= GET PROFILE  =================
+  @Get('me/profile')
+  async getMyProfile(@CurrentUser() user: JwtPayload) {
+    return this.userService.getProfile(user.id);
+  }
 }

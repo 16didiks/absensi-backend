@@ -166,4 +166,14 @@ export class UserService {
       order: { createdAt: 'DESC' },
     });
   }
+
+  // ================= GET PROFILE SENDIRI =================
+  async getProfile(userId: number): Promise<Partial<User>> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'name', 'email', 'photo', 'position', 'phone'],
+    });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    return user;
+  }
 }
