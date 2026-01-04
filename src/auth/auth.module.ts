@@ -13,7 +13,7 @@ import { UserModule } from '../user/user.module';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'supersecretkey',
-      signOptions: { expiresIn: '12h' }, // sementara untuk testing
+      signOptions: { expiresIn: '12h' },
     }),
   ],
   controllers: [AuthController],

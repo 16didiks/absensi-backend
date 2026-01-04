@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Param,
   Body,
   UseGuards,
@@ -17,6 +18,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from './user.entity';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtPayload } from '../auth/jwt-payload.interface';
 
 @Controller('api/user')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,6 +39,15 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  // ================= UPDATE PROFIL SENDIRI =================
+  @Patch('me')
+  async updateMe(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateUserDto,
+  ): Promise<User> {
+    return this.userService.update(user.id, dto);
+  }
+
   // ================= UPDATE USER (HRD) =================
   @Roles(UserRole.HRD)
   @Put(':id')
@@ -51,5 +63,12 @@ export class UserController {
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
     return this.userService.delete(id);
+  }
+
+  // ================= GET PROFILE CHANGE LOG =================
+  @Roles(UserRole.HRD)
+  @Get('profile-change-log')
+  async getProfileChangeLog() {
+    return this.userService.getProfileChangeLogs();
   }
 }
