@@ -1,3 +1,4 @@
+// src/user/user.controller.ts
 import {
   Controller,
   Get,
@@ -7,22 +8,23 @@ import {
   Patch,
   Param,
   Body,
-  // UseGuards,
+  UseGuards,
   ParseIntPipe,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.entity';
-// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-// import { RolesGuard } from '../auth/roles.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from './user.entity';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 
 @Controller('api/user')
-// @UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -45,6 +47,9 @@ export class UserController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateUserDto,
   ): Promise<User> {
+    if (!user || !user.id) {
+      throw new UnauthorizedException('User tidak terautentikasi');
+    }
     return this.userService.update(user.id, dto);
   }
 
@@ -72,9 +77,12 @@ export class UserController {
     return this.userService.getProfileChangeLogs();
   }
 
-  // ================= GET PROFILE  =================
+  // ================= GET PROFILE =================
   @Get('me/profile')
   async getMyProfile(@CurrentUser() user: JwtPayload) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException('User tidak terautentikasi');
+    }
     return this.userService.getProfile(user.id);
   }
 }
