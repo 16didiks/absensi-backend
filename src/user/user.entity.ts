@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Attendance } from '../attendance/attendance.entity';
+import { ProfileChangeLog } from '../log/profile-change-log.entity';
 
 export enum UserRole {
   EMPLOYEE = 'EMPLOYEE',
@@ -41,6 +42,12 @@ export class User {
 
   @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances!: Attendance[];
+
+  @OneToMany(() => ProfileChangeLog, (log) => log.user, {
+    cascade: false,
+    onDelete: 'SET NULL',
+  })
+  profileChangeLogs!: ProfileChangeLog[];
 
   @CreateDateColumn()
   createdAt!: Date;

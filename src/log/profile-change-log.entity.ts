@@ -1,3 +1,4 @@
+// src/log/profile-change-log.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,22 +8,25 @@ import {
 } from 'typeorm';
 import { User } from '../user/user.entity';
 
-@Entity()
+@Entity({ name: 'profile_change_logs' })
 export class ProfileChangeLog {
   @PrimaryGeneratedColumn()
   id!: number;
-
-  @ManyToOne(() => User, (user) => user.id, { eager: true })
-  user!: User;
 
   @Column()
   field!: string;
 
   @Column({ nullable: true })
-  oldValue?: string;
+  oldValue!: string;
 
   @Column({ nullable: true })
-  newValue?: string;
+  newValue!: string;
+
+  @ManyToOne(() => User, (user) => user.profileChangeLogs, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  user!: User | null;
 
   @CreateDateColumn()
   createdAt!: Date;

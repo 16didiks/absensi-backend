@@ -1,4 +1,4 @@
-// attendance.entity.ts
+// src/attendance/attendance.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -16,9 +16,12 @@ export class Attendance {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => User, (user) => user.attendances)
+  @ManyToOne(() => User, (user) => user.attendances, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'userId' })
-  user!: User;
+  user!: User | null;
 
   @Column({ type: 'enum', enum: ['IN', 'OUT'] })
   type!: AttendanceType;
