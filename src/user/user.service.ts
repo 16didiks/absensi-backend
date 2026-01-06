@@ -144,7 +144,6 @@ export class UserService {
         await this.logRepo.save(logEntry);
       }
 
-      // 🔔 Kirim notifikasi realtime ke admin
       this.notificationGateway.sendUserUpdateNotification(
         `User ${updatedUser.name} mengupdate profilnya`,
       );
