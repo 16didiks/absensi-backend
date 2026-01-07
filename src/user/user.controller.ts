@@ -11,7 +11,13 @@ import {
   UseGuards,
   ParseIntPipe,
   UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,15 +47,56 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  // ================= UPDATE PROFIL SENDIRI =================
+  // ================= UPDATE PROFIL SENDIRI + UPLOAD FOTO =================
   @Patch('me')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: (
+          req,
+          file,
+          cb: (error: Error | null, destination: string) => void,
+        ) => {
+          const uploadPath = path.join(__dirname, '../../uploads/users');
+          if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
+        filename: (
+          req,
+          file,
+          cb: (error: Error | null, filename: string) => void,
+        ) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = file.originalname.split('.').pop();
+          cb(null, `photo-${uniqueSuffix}.${ext}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Only images are allowed!'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // max 5MB
+    }),
+  )
   async updateMe(
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<User> {
     if (!user || !user.id) {
       throw new UnauthorizedException('User tidak terautentikasi');
     }
+
+    // Jika ada file, set url photo
+    if (file) {
+      dto.photo = `/uploads/users/${file.filename}`;
+    }
+
     return this.userService.update(user.id, dto);
   }
 

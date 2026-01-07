@@ -1,8 +1,9 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
-
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MulterModule } from '@nestjs/platform-express';
+import { join } from 'path';
 
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
@@ -23,6 +24,11 @@ import { NotificationModule } from './notification/notification.module';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true,
+    }),
+    // ================= MULTER =================
+    MulterModule.register({
+      storage: undefined,
+      dest: join(__dirname, '..', 'uploads'),
     }),
     NotificationModule,
     UserModule,

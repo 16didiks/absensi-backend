@@ -173,6 +173,11 @@ export class UserService {
       select: ['id', 'name', 'email', 'photo', 'position', 'phone'],
     });
     if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    if (user.photo) {
+      user.photo = `http://localhost:3000${user.photo}`;
+    }
+
     return user;
   }
 }
